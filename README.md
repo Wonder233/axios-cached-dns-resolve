@@ -33,7 +33,7 @@ Node 14+
 ## Getting started
 
 ```console
-npm i -S axios-cached-dns-resolve
+yarn add git+https://github.com/Wonder233/axios-cached-dns-resolve.git
 ```
 
 # Usage
