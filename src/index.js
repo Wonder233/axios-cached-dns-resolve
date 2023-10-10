@@ -9,6 +9,7 @@ export {
   getStats,
   getDnsCacheEntries,
   registerInterceptor,
+  changeLogger,
   getAddress,
   backgroundRefresh,
 } from './axios-cached-dns-resolve.js'

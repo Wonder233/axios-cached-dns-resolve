@@ -25,7 +25,7 @@ export const config = {
     // timestamp: true,
     prettyPrint: process.env.NODE_ENV === 'DEBUG' || false,
     formatters: {
-      level(label/* , number */) {
+      level(label /* , number */) {
         return { level: label }
       },
     },
@@ -35,7 +35,7 @@ export const config = {
 
 export const cacheConfig = {
   max: config.dnsCacheSize,
-  ttl: (config.dnsTtlMs * config.cacheGraceExpireMultiplier), // grace for refresh
+  ttl: config.dnsTtlMs * config.cacheGraceExpireMultiplier, // grace for refresh
 }
 
 export const stats = {
@@ -103,6 +103,11 @@ export function getDnsCacheEntries() {
 //   updatedTs: 1555771516581,
 // }
 
+export function changeLogger(logger) {
+  log = logger
+  log.changed = true
+}
+
 export function registerInterceptor(axios) {
   if (config.disabled || !axios || !axios.interceptors) return // supertest
   axios.interceptors.request.use(async (reqConfig) => {
@@ -145,7 +150,10 @@ export async function getAddress(host) {
     return ip
   }
   ++stats.misses
-  if (log.isLevelEnabled('debug')) log.debug(`cache miss ${host}`)
+
+  if (log.changed || log.isLevelEnabled('debug')) {
+    log.debug(`[DNS cache] cache miss ${host}`)
+  }
 
   const ips = await resolve(host)
   dnsEntry = {
@@ -207,7 +215,7 @@ async function resolve(host) {
   } catch (e) {
     let lookupResp = await dnsLookup(host, { all: true }) // pass options all: true for all addresses
     lookupResp = extractAddresses(lookupResp)
-    if (!Array.isArray(lookupResp) || lookupResp.length < 1) throw new Error(`fallback to dnsLookup returned no address ${host}`)
+    if (!Array.isArray(lookupResp) || lookupResp.length < 1) { throw new Error(`fallback to dnsLookup returned no address ${host}`) }
     ips = lookupResp
   }
   return ips
@@ -226,6 +234,6 @@ function recordError(err, errMesg) {
   ++stats.errors
   stats.lastError = err
   stats.lastErrorTs = new Date().toISOString()
-  log.error(err, errMesg)
+  log.error(`[DNS cache] ${JSON.stringify(err)} ${errMesg}`)
 }
 /* eslint-enable no-plusplus */
