@@ -26,8 +26,7 @@ This lib proxies through the OS resolution mechanism which may provide further c
   * Providing statistics and introspection
 
 ## Requirements
-
-ECMAScript module (esm), not native esm/.mjs with package.json type: module, requires esm
+suport esm/cjs export
 
 Node 14+
 
