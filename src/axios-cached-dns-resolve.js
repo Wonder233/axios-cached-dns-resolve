@@ -52,6 +52,7 @@ export const stats = {
 let log
 let backgroundRefreshId
 let cachePruneId
+let enableLogLevels = ['error']
 
 init()
 
@@ -103,9 +104,10 @@ export function getDnsCacheEntries() {
 //   updatedTs: 1555771516581,
 // }
 
-export function changeLogger(logger) {
+export function changeLogger(logger, levels = ['error']) {
   log = logger
   log.changed = true
+  enableLogLevels = levels
 }
 
 export function registerInterceptor(axios) {
@@ -113,7 +115,7 @@ export function registerInterceptor(axios) {
   axios.interceptors.request.use(async (reqConfig) => {
     try {
       let url
-      if (reqConfig.baseURL) {
+      if (reqConfig.baseURL && !reqConfig.url) {
         url = URL.parse(reqConfig.baseURL)
       } else {
         url = URL.parse(reqConfig.url)
@@ -126,7 +128,7 @@ export function registerInterceptor(axios) {
       url.hostname = await getAddress(url.hostname)
       delete url.host // clear hostname
 
-      if (reqConfig.baseURL) {
+      if (reqConfig.baseURL && !reqConfig.url) {
         reqConfig.baseURL = URL.format(url)
       } else {
         reqConfig.url = URL.format(url)
@@ -151,7 +153,7 @@ export async function getAddress(host) {
   }
   ++stats.misses
 
-  if (log.changed || log.isLevelEnabled('debug')) {
+  if ((log.changed && enableLogLevels.includes('debug')) || (log.isLevelEnabled && log.isLevelEnabled('debug'))) {
     log.debug(`[DNS cache] cache miss ${host}`)
   }
 
@@ -215,7 +217,9 @@ async function resolve(host) {
   } catch (e) {
     let lookupResp = await dnsLookup(host, { all: true }) // pass options all: true for all addresses
     lookupResp = extractAddresses(lookupResp)
-    if (!Array.isArray(lookupResp) || lookupResp.length < 1) { throw new Error(`fallback to dnsLookup returned no address ${host}`) }
+    if (!Array.isArray(lookupResp) || lookupResp.length < 1) {
+      throw new Error(`fallback to dnsLookup returned no address ${host}`)
+    }
     ips = lookupResp
   }
   return ips

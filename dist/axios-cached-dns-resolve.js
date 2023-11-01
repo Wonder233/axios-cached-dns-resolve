@@ -78,6 +78,7 @@ var stats = exports.stats = {
 var log;
 var backgroundRefreshId;
 var cachePruneId;
+var enableLogLevels = ['error'];
 init();
 function init() {
   log = (0, _logging.init)(config.logging);
@@ -124,8 +125,10 @@ function getDnsCacheEntries() {
 // }
 
 function changeLogger(logger) {
+  var levels = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ['error'];
   log = logger;
   log.changed = true;
+  enableLogLevels = levels;
 }
 function registerInterceptor(axios) {
   if (config.disabled || !axios || !axios.interceptors) return; // supertest
@@ -136,7 +139,7 @@ function registerInterceptor(axios) {
         while (1) switch (_context.prev = _context.next) {
           case 0:
             _context.prev = 0;
-            if (reqConfig.baseURL) {
+            if (reqConfig.baseURL && !reqConfig.url) {
               url = _url["default"].parse(reqConfig.baseURL);
             } else {
               url = _url["default"].parse(reqConfig.url);
@@ -156,7 +159,7 @@ function registerInterceptor(axios) {
             url.hostname = _context.sent;
             delete url.host; // clear hostname
 
-            if (reqConfig.baseURL) {
+            if (reqConfig.baseURL && !reqConfig.url) {
               reqConfig.baseURL = _url["default"].format(url);
             } else {
               reqConfig.url = _url["default"].format(url);
@@ -202,7 +205,7 @@ function _getAddress() {
           return _context2.abrupt("return", _ip);
         case 7:
           ++stats.misses;
-          if (log.changed || log.isLevelEnabled('debug')) {
+          if (log.changed && enableLogLevels.includes('debug') || log.isLevelEnabled && log.isLevelEnabled('debug')) {
             log.debug("[DNS cache] cache miss ".concat(host));
           }
           _context2.next = 11;
