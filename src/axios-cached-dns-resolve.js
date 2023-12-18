@@ -125,10 +125,16 @@ export function registerInterceptor(axios) {
 
       reqConfig.headers.Host = url.hostname // set hostname in header
 
-      const { ip, dnsCost } = await getAddress(url.hostname)
+      const { ip, dnsCost, starttime } = await getAddress(url.hostname)
       url.hostname = ip
       delete url.host // clear hostname
-      reqConfig.dnsCost = dnsCost
+      if (reqConfig.timings && dnsCost) {
+        if (typeof reqConfig.timings === 'boolean') {
+          reqConfig.timings = {}
+        }
+        reqConfig.timings.dns = dnsCost
+        reqConfig.timings.starttime = starttime
+      }
 
       if (reqConfig.baseURL && !reqConfig.url) {
         reqConfig.baseURL = URL.format(url)
@@ -151,7 +157,7 @@ export async function getAddress(host) {
     // eslint-disable-next-line no-plusplus
     const ip = dnsEntry.ips[dnsEntry.nextIdx++ % dnsEntry.ips.length] // round-robin
     config.cache.set(host, dnsEntry)
-    return { ip, dnsCost: 0 }
+    return { ip }
   }
   ++stats.misses
 
@@ -172,7 +178,7 @@ export async function getAddress(host) {
   // eslint-disable-next-line no-plusplus
   const ip = dnsEntry.ips[dnsEntry.nextIdx++ % dnsEntry.ips.length] // round-robin
   config.cache.set(host, dnsEntry)
-  return { ip, dnsCost }
+  return { ip, dnsCost, starttime }
 }
 
 let backgroundRefreshing = false

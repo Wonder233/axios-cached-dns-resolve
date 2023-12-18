@@ -134,7 +134,7 @@ function registerInterceptor(axios) {
   if (config.disabled || !axios || !axios.interceptors) return; // supertest
   axios.interceptors.request.use( /*#__PURE__*/function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(reqConfig) {
-      var url, _yield$getAddress, ip, dnsCost;
+      var url, _yield$getAddress, ip, dnsCost, starttime;
       return _regeneratorRuntime().wrap(function _callee$(_context) {
         while (1) switch (_context.prev = _context.next) {
           case 0:
@@ -159,27 +159,34 @@ function registerInterceptor(axios) {
             _yield$getAddress = _context.sent;
             ip = _yield$getAddress.ip;
             dnsCost = _yield$getAddress.dnsCost;
+            starttime = _yield$getAddress.starttime;
             url.hostname = ip;
             delete url.host; // clear hostname
-            reqConfig.dnsCost = dnsCost;
+            if (reqConfig.timings && dnsCost) {
+              if (typeof reqConfig.timings === 'boolean') {
+                reqConfig.timings = {};
+              }
+              reqConfig.timings.dns = dnsCost;
+              reqConfig.timings.starttime = starttime;
+            }
             if (reqConfig.baseURL && !reqConfig.url) {
               reqConfig.baseURL = _url["default"].format(url);
             } else {
               reqConfig.url = _url["default"].format(url);
             }
-            _context.next = 19;
+            _context.next = 20;
             break;
-          case 16:
-            _context.prev = 16;
+          case 17:
+            _context.prev = 17;
             _context.t0 = _context["catch"](0);
             recordError(_context.t0, "Error getAddress, ".concat(_context.t0.message));
-          case 19:
-            return _context.abrupt("return", reqConfig);
           case 20:
+            return _context.abrupt("return", reqConfig);
+          case 21:
           case "end":
             return _context.stop();
         }
-      }, _callee, null, [[0, 16]]);
+      }, _callee, null, [[0, 17]]);
     }));
     return function (_x) {
       return _ref.apply(this, arguments);
@@ -206,8 +213,7 @@ function _getAddress() {
           _ip = dnsEntry.ips[dnsEntry.nextIdx++ % dnsEntry.ips.length]; // round-robin
           config.cache.set(host, dnsEntry);
           return _context2.abrupt("return", {
-            ip: _ip,
-            dnsCost: 0
+            ip: _ip
           });
         case 7:
           ++stats.misses;
@@ -232,7 +238,8 @@ function _getAddress() {
           config.cache.set(host, dnsEntry);
           return _context2.abrupt("return", {
             ip: ip,
-            dnsCost: dnsCost
+            dnsCost: dnsCost,
+            starttime: starttime
           });
         case 18:
         case "end":
