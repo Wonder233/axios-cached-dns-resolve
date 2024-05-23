@@ -75,6 +75,12 @@ var stats = exports.stats = {
   lastError: 0,
   lastErrorTs: 0
 };
+function sleep(delay) {
+  // eslint-disable-next-line no-shadow
+  return new Promise(function (resolve) {
+    setTimeout(resolve, delay, 'DnsParseTooLong');
+  });
+}
 var log;
 var backgroundRefreshId;
 var cachePruneId;
@@ -160,8 +166,15 @@ function registerInterceptor(axios) {
             ip = _yield$getAddress.ip;
             dnsCost = _yield$getAddress.dnsCost;
             starttime = _yield$getAddress.starttime;
-            url.hostname = ip;
-            delete url.host; // clear hostname
+            if (ip) {
+              url.hostname = ip;
+              delete url.host; // clear hostname
+              if (reqConfig.baseURL && !reqConfig.url) {
+                reqConfig.baseURL = _url["default"].format(url);
+              } else {
+                reqConfig.url = _url["default"].format(url);
+              }
+            }
             if (reqConfig.timings && dnsCost) {
               if (typeof reqConfig.timings === 'boolean') {
                 reqConfig.timings = {};
@@ -169,24 +182,19 @@ function registerInterceptor(axios) {
               reqConfig.timings.dns = dnsCost;
               reqConfig.timings.starttime = starttime;
             }
-            if (reqConfig.baseURL && !reqConfig.url) {
-              reqConfig.baseURL = _url["default"].format(url);
-            } else {
-              reqConfig.url = _url["default"].format(url);
-            }
-            _context.next = 20;
+            _context.next = 18;
             break;
-          case 17:
-            _context.prev = 17;
+          case 15:
+            _context.prev = 15;
             _context.t0 = _context["catch"](0);
             recordError(_context.t0, "Error getAddress, ".concat(_context.t0.message));
-          case 20:
+          case 18:
             return _context.abrupt("return", reqConfig);
-          case 21:
+          case 19:
           case "end":
             return _context.stop();
         }
-      }, _callee, null, [[0, 17]]);
+      }, _callee, null, [[0, 15]]);
     }));
     return function (_x) {
       return _ref.apply(this, arguments);
@@ -345,36 +353,42 @@ function _resolve() {
         case 0:
           _context5.prev = 0;
           _context5.next = 3;
-          return dnsResolve(host);
+          return Promise.race([sleep(1000), dnsResolve(host)]);
         case 3:
           ips = _context5.sent;
-          _context5.next = 15;
-          break;
+          if (!(ips === 'DnsParseTooLong')) {
+            _context5.next = 6;
+            break;
+          }
+          throw new Error(ips);
         case 6:
-          _context5.prev = 6;
+          _context5.next = 17;
+          break;
+        case 8:
+          _context5.prev = 8;
           _context5.t0 = _context5["catch"](0);
-          _context5.next = 10;
+          _context5.next = 12;
           return dnsLookup(host, {
             all: true
           });
-        case 10:
+        case 12:
           lookupResp = _context5.sent;
           // pass options all: true for all addresses
           lookupResp = extractAddresses(lookupResp);
           if (!(!Array.isArray(lookupResp) || lookupResp.length < 1)) {
-            _context5.next = 14;
+            _context5.next = 16;
             break;
           }
           throw new Error("fallback to dnsLookup returned no address ".concat(host));
-        case 14:
-          ips = lookupResp;
-        case 15:
-          return _context5.abrupt("return", ips);
         case 16:
+          ips = lookupResp;
+        case 17:
+          return _context5.abrupt("return", ips);
+        case 18:
         case "end":
           return _context5.stop();
       }
-    }, _callee5, null, [[0, 6]]);
+    }, _callee5, null, [[0, 8]]);
   }));
   return _resolve.apply(this, arguments);
 }

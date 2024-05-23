@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.3.2] - 2024-05-23
+
+### Fixed
+
+- When dnsResolve takes more than 1s, discard it
+- when ip is undefined, not to replace url
+
+## [3.3.1] - 2024-01-23
+
+### Feature
+
+- Returns DNS resolution time
+
+## [3.3.0] - 2023-10-10
+
+### Changed
+
+- Change package to support esm/cjs
+
 ## [3.2.2] - 2022-09-06
 
 ### Fixed

@@ -1,5 +1,7 @@
 # axios-cached-dns-resolve
 
+将该包优化为支持 esm/cjs 引用，并增加DNS解析时间。若在axios拦截器中传入 config.timings = true 则将返回 dns 耗时并以 config.timings = { dns: 123} 格式返回。
+
 Axios uses node.js dns.lookup to resolve host names.
 dns.lookup is synchronous and executes on limited libuv thread pool.
 Every axios request will resolve the dns name in kubernetes, openshift, and cloud environments that intentionally set TTL low or to 0 for quick dynamic updates.
@@ -73,7 +75,7 @@ const config = {
 
 ## Statistics
 
-Statistics are available via 
+Statistics are available via
 
 ```javascript
 getStats()

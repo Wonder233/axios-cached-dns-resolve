@@ -1,6 +1,6 @@
 {
-  "name": "axios-cached-dns-resolve",
-  "version": "3.3.0",
+  "name": "@wonder233/axios-cached-dns-resolve",
+  "version": "3.3.2",
   "description": "Caches dns resolutions made with async dns.resolve instead of default sync dns.lookup, refreshes in background",
   "main": "./dist/index.js",
   "module": "./src/index.js",
@@ -31,7 +31,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git@github.com:tcollinsworth/axios-cached-dns-resolve.git"
+    "url": "https://github.com/Wonder233/axios-cached-dns-resolve"
   },
   "devDependencies": {
     "@babel/cli": "^7.23.0",

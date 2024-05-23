@@ -49,6 +49,13 @@ export const stats = {
   lastErrorTs: 0,
 }
 
+function sleep(delay) {
+  // eslint-disable-next-line no-shadow
+  return new Promise((resolve) => {
+    setTimeout(resolve, delay, 'DnsParseTooLong')
+  })
+}
+
 let log
 let backgroundRefreshId
 let cachePruneId
@@ -126,20 +133,22 @@ export function registerInterceptor(axios) {
       reqConfig.headers.Host = url.hostname // set hostname in header
 
       const { ip, dnsCost, starttime } = await getAddress(url.hostname)
-      url.hostname = ip
-      delete url.host // clear hostname
+      if (ip) {
+        url.hostname = ip
+        delete url.host // clear hostname
+        if (reqConfig.baseURL && !reqConfig.url) {
+          reqConfig.baseURL = URL.format(url)
+        } else {
+          reqConfig.url = URL.format(url)
+        }
+      }
+
       if (reqConfig.timings && dnsCost) {
         if (typeof reqConfig.timings === 'boolean') {
           reqConfig.timings = {}
         }
         reqConfig.timings.dns = dnsCost
         reqConfig.timings.starttime = starttime
-      }
-
-      if (reqConfig.baseURL && !reqConfig.url) {
-        reqConfig.baseURL = URL.format(url)
-      } else {
-        reqConfig.url = URL.format(url)
       }
     } catch (err) {
       recordError(err, `Error getAddress, ${err.message}`)
@@ -223,7 +232,11 @@ export async function backgroundRefresh() {
 async function resolve(host) {
   let ips
   try {
-    ips = await dnsResolve(host)
+    ips = await Promise.race([sleep(1000), dnsResolve(host)])
+    // dnsResolve 1s 内未检测出来则直接跳过
+    if (ips === 'DnsParseTooLong') {
+      throw new Error(ips)
+    }
   } catch (e) {
     let lookupResp = await dnsLookup(host, { all: true }) // pass options all: true for all addresses
     lookupResp = extractAddresses(lookupResp)
